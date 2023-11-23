@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  jupyter: 
+    image: nvcr.io/nvidia/l4t-ml:r32.7.1-py3
+    runtime: nvidia
+    network_mode: host
+    working_dir: /app
+    volumes:
+      - ./:/app/SMC7
+    devices:
+      - /dev/video0
+    stdin_open: true
+    tty: true
