@@ -8,35 +8,32 @@ classdef PlayChord < audioPlugin                                % <== (1) Inheri
         Goffset  = 10;
         Boffset  = 14;
         E2offset = 19;
+        
     end
     properties (Access = private)
-        udpr
+        
     end
  
     methods
-
-
-        function out = process(plugin)                           %< == (4) Define audio processing.
-           
-            
-            plugin.udpr = dsp.UDPReceiver('RemoteIPPort', 20000);
-            
-
-            
-
-            if plugin.udpr == "Am"
+        function out = process(plugin, in)                           %< == (4) Define audio processing.
+            udpr = dsp.UDPReceiver('LocalIPPort', 14550);
+            % plugin.udpr = dsp.UDPReceiver('LocalIPPort', 14550);
+            chord = udpr();
+            if chord == 0 %"Am"
                 fret = [5 7 7 5 5 5];
-            elseif plugin.updr == "C"
-                fret = [8 10 10 9 8 8];
-            elseif plugin.udpr == "Dm"
-                fret = [10 12 12 10 10 10];
-            elseif plugin.udpr == "Em"
-                fret = [0 2 2 0 0 0];
-            elseif plugin.udpr == "F"
-                fret = [1 3 3 2 1 1];
-            elseif plugin.udpr == "G"
-                fret = [3 2 0 0 0 3];
-
+            % elseif chord == "C"
+            %     fret = [8 10 10 9 8 8];
+            % elseif chord == "Dm"
+            %     fret = [10 12 12 10 10 10];
+            % elseif chord == "Em"
+            %     fret = [0 2 2 0 0 0];
+            % elseif chord == "F"
+            %     fret = [1 3 3 2 1 1];
+            % elseif chord == "G"
+            %     fret = [3 2 0 0 0 3];
+            else
+                out = in;
+                return
             end
 
 
@@ -58,7 +55,6 @@ classdef PlayChord < audioPlugin                                % <== (1) Inheri
   
             b = cell(length(delay),1);
             a = cell(length(delay),1);
-            H = zeros(length(delay),4096);
             note = zeros(length(x),length(delay));
             for indx = 1:length(delay)
     
@@ -74,7 +70,7 @@ classdef PlayChord < audioPlugin                                % <== (1) Inheri
                 % Make sure that each note is centered on zero.
                 note(:, indx) = note(:, indx) - mean(note(:, indx));
     
-                [H(indx,:),~] = freqz(b{indx}, a{indx}, F, plugin.Fs);
+                % [H(indx,:),~] = freqz(b{indx}, a{indx}, F, plugin.Fs);
             end
 
             
@@ -83,8 +79,9 @@ classdef PlayChord < audioPlugin                                % <== (1) Inheri
             combinedNote = combinedNote/max(abs(combinedNote));
 
             % To hear, type: 
-            hplayer = audioplayer(combinedNote, plugin.Fs); 
-            out = play(hplayer);
+            % hplayer = audioplayer(combinedNote, plugin.Fs); 
+            % out = play(hplayer);
+            out = [combinedNote combinedNote];
 
         end
     end
