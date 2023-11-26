@@ -33,5 +33,5 @@ sudo docker-compose up -d
 6. Open the `Camera Input to Model.ipynb` notebook and run it
 7. After finishing work with notebooks you can stop docker with a comand:
  ```
- sudo docker-compose up -d
+ sudo docker-compose down
  ```
