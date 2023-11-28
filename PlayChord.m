@@ -1,6 +1,11 @@
 classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one that only generates sound)
 
     properties
+        % Music Logic
+        lastChord uint8 = 0;
+        buffer = zeros(192000, 2); % buffer for storing generated sound, sort of circular buffer        
+    end
+    properties (Constant)
         % Music Consts
         A        = 110; % The A string of a guitar is normally tuned to 110 Hz
         Eoffset  = -5;
@@ -10,9 +15,6 @@ classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one tha
         E2offset = 19;
         LengthOfNote = 1;
 
-        % Music Logic
-        lastChord = 0;
-        buffer = zeros(192000, 2); % buffer for storing generated sound, sort of circular buffer
         minChord = 0;
         maxChord = 25;
 
@@ -59,8 +61,8 @@ classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one tha
         end % generateNote() 
 
         function out = process(plugin) % Define audio processing 
-            sampleRate = getSampleRate(); % read host's sample rate 
-            bufferLen = getSamplesPerFrame(); % read host's buffer length 
+            sampleRate = plugin.getSampleRate(); % read host's sample rate 
+            bufferLen = plugin.getSamplesPerFrame(); % read host's buffer length 
 
             udpr = dsp.UDPReceiver('LocalIPPort', plugin.UdpPort); 
             chord = udpr();
@@ -70,9 +72,9 @@ classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one tha
             if ~isempty(chord) && chord(1) ~= plugin.lastChord
                 plugin.lastChord = chord(1); % save the new chord
                 if plugin.minChord < plugin.lastChord && plugin.lastChord < plugin.maxChord
-                    newFret = getFretsFromChordNumber(plugin.lastChord); % get frets number of this chord
+                    newFret = plugin.getFretsFromChordNumber(plugin.lastChord); % get frets number of this chord
                     
-                    newNote = generateNote(plugin, newFret, sampleRate); % generate new note's sound
+                    newNote = plugin.generateNote(newFret, sampleRate); % generate new note's sound
                     newNoteLength = plugin.LengthOfNote * sampleRate;
     
                     plugin.buffer(1:newNoteLength,:) = plugin.buffer(1:newNoteLength,:) + newNote;
@@ -91,15 +93,15 @@ classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one tha
 
     methods(Static)
         function frets = getFretsFromChordNumber(no)
-            chordMappings = ["A","Am","A#","A#m"...
+            chordMappings = {"A","Am","A#","A#m"...
                              "B","Bm",...
                              "C","Cm", "C#","C#m",...
                              "D","Dm","D#","D#m"...
                              "E","Em",...
                              "F","Fm","F#","F#m"...
-                             "G","Gm","G#","G#m"];
+                             "G","Gm","G#","G#m"};
 
-            switch chordMappings(no)
+            switch chordMappings{no}
                 case "A"
                     frets = [5 7 7 3 5 5];
                 case "Am"
