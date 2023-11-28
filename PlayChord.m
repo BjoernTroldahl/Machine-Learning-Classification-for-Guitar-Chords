@@ -9,15 +9,15 @@ classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one tha
         Boffset  = 14;
         E2offset = 19;
         LengthOfNote = 1;
-        MaxSampleRate = 192000;
 
         % Music Logic
-        lastChord = "";
-        buffer = zeros(LengthOfNote * MaxSampleRate, 2); % buffer for storing generated sound, sort of circular buffer
+        lastChord = 0;
+        buffer = zeros(192000, 2); % buffer for storing generated sound, sort of circular buffer
+        minChord = 0;
+        maxChord = 25;
 
         % Technical
         UdpPort = 14550;
-
     end
     methods
 
@@ -59,23 +59,24 @@ classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one tha
         end % generateNote() 
 
         function out = process(plugin) % Define audio processing 
-            % udpr = dsp.UDPReceiver('LocalIPPort', 14550); 
-            % if(udpr) % TODO check if UDP in the list 
-            % chord = udpr();
+            sampleRate = getSampleRate(); % read host's sample rate 
+            bufferLen = getSamplesPerFrame(); % read host's buffer length 
 
-            sampleRate = getSampleRate();
-            bufferLen = getSamplesPerFrame();
-            
+            udpr = dsp.UDPReceiver('LocalIPPort', plugin.UdpPort); 
+            chord = udpr();
+
             % We only generate a new sound if the chord was changed!
             % checks if a new chord was played
-            if chord ~= plugin.lastChord
-                plugin.lastChord = chord; % save the new chord
-                newFret = getFretsFromChord(chord); % get frets number of this chord
-                
-                newNote = generateNote(plugin, newFret, sampleRate); % generate new note's sound
-                newNoteLength = plugin.LengthOfNote * sampleRate;
-
-                plugin.buffer(1:newNoteLength,:) = plugin.buffer(1:newNoteLength,:) + newNote;
+            if ~isempty(chord) && chord(1) ~= plugin.lastChord
+                plugin.lastChord = chord(1); % save the new chord
+                if plugin.minChord < plugin.lastChord && plugin.lastChord < plugin.maxChord
+                    newFret = getFretsFromChordNumber(plugin.lastChord); % get frets number of this chord
+                    
+                    newNote = generateNote(plugin, newFret, sampleRate); % generate new note's sound
+                    newNoteLength = plugin.LengthOfNote * sampleRate;
+    
+                    plugin.buffer(1:newNoteLength,:) = plugin.buffer(1:newNoteLength,:) + newNote;
+                end
             end
             
             % Assing output and circulate our buffer
@@ -89,57 +90,66 @@ classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one tha
     end
 
     methods(Static)
-        function frets = getFretsFromChord(chordName)
-            if chordName == "A"
-                frets = [5 7 7 3 5 5];
-            elseif chordName == "Am"
-                frets = [5 7 7 5 5 5];
-            elseif chordName == "A#"
-                frets = [6 4 4 5 6 6];
-            elseif chordName == "A#m"
-                frets = [6 4 4 6 6 6];
-            elseif chordName == "B"
-                frets = [7 9 9 8 7 7];
-            elseif chordName == "Bm"
-                frets = [7 9 9 7 7 7];
-            elseif chordName == "C"
-                frets = [8 10 10 9 8 8];
-            elseif chordName == "Cm"
-                frets = [8 10 10 8 8 8];
-            elseif chordName == "C#"
-                frets = [9 11 11 10 9 9];
-            elseif chordName == "C#m"
-                frets = [9 11 11 9 9 9];
-            elseif chordName == "D"
-                frets = [10 12 12 11 10 10];
-            elseif chordName == "Dm"
-                frets = [10 12 12 10 10 10];
-            elseif chordName == "D#"
-                frets = [11 13 13 12 11 11];
-            elseif chordName == "D#m"
-                frets = [11 13 13 11 11 11];
-            elseif chordName == "E"
-                frets = [0 2 2 1 0 0];
-            elseif chordName == "Em"
-                frets = [0 2 2 0 0 0];
-            elseif chordName == "F"
-                frets = [1 3 3 2 1 1];
-            elseif chordName == "Fm"
-                frets = [1 3 3 1 1 1];
-            elseif chordName == "F#"
-                frets = [2 4 4 3 2 2];
-            elseif chordName == "F#m"
-                frets = [2 4 4 2 2 2];
-            elseif chordName == "G"
-                frets = [3 2 0 0 0 3];
-            elseif chordName == "Gm"
-                frets = [3 5 5 3 3 3];
-            elseif chordName == "G#"
-                frets = [4 6 6 5 4 4];
-            elseif chordName == "G#m"
-                frets = [4 6 6 4 4 4];
-            else
-                frets = [5 7 7 3 5 5]; % just in case defaults to A
+        function frets = getFretsFromChordNumber(no)
+            chordMappings = ["A","Am","A#","A#m"...
+                             "B","Bm",...
+                             "C","Cm", "C#","C#m",...
+                             "D","Dm","D#","D#m"...
+                             "E","Em",...
+                             "F","Fm","F#","F#m"...
+                             "G","Gm","G#","G#m"];
+
+            switch chordMappings(no)
+                case "A"
+                    frets = [5 7 7 3 5 5];
+                case "Am"
+                    frets = [5 7 7 5 5 5];
+                case "A#"
+                    frets = [6 4 4 5 6 6];
+                case "A#m"
+                    frets = [6 4 4 6 6 6];
+                case "B"
+                    frets = [7 9 9 8 7 7];
+                case "Bm"
+                    frets = [7 9 9 7 7 7];
+                case "C"
+                    frets = [8 10 10 9 8 8];
+                case "Cm"
+                    frets = [8 10 10 8 8 8];
+                case "C#"
+                    frets = [9 11 11 10 9 9];
+                case "C#m"
+                    frets = [9 11 11 9 9 9];
+                case "D"
+                    frets = [10 12 12 11 10 10];
+                case "Dm"
+                    frets = [10 12 12 10 10 10];
+                case "D#"
+                    frets = [11 13 13 12 11 11];
+                case "D#m"
+                    frets = [11 13 13 11 11 11];
+                case "E"
+                    frets = [0 2 2 1 0 0];
+                case "Em"
+                    frets = [0 2 2 0 0 0];
+                case "F"
+                    frets = [1 3 3 2 1 1];
+                case "Fm"
+                    frets = [1 3 3 1 1 1];
+                case "F#"
+                    frets = [2 4 4 3 2 2];
+                case "F#m"
+                    frets = [2 4 4 2 2 2];
+                case "G"
+                    frets = [3 2 0 0 0 3];
+                case "Gm"
+                    frets = [3 5 5 3 3 3];
+                case "G#"
+                    frets = [4 6 6 5 4 4];
+                case "G#m"
+                    frets = [4 6 6 4 4 4];
+                otherwise
+                    frets = [5 7 7 3 5 5]; % just in case defaults to A
             end
         end % getFretsFromChord() 
 
