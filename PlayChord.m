@@ -1,4 +1,4 @@
-classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one that only generates sound)
+classdef PlayChord < audioPlugin % Inherit from audioPluginSource (one that only generates sound)
 
     properties
         % Music Logic
@@ -60,9 +60,9 @@ classdef PlayChord < audioPluginSource % Inherit from audioPluginSource (one tha
             note = note/max(abs(note)); % Normalize the sound
         end % generateNote() 
 
-        function out = process(plugin) % Define audio processing 
+        function out = process(plugin, in) % Define audio processing 
             sampleRate = plugin.getSampleRate(); % read host's sample rate 
-            bufferLen = plugin.getSamplesPerFrame(); % read host's buffer length 
+            bufferLen = size(in,1); % read host's buffer length 
 
             udpr = dsp.UDPReceiver('LocalIPPort', plugin.UdpPort); 
             chord = udpr();
