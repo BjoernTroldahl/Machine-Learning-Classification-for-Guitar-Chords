@@ -166,6 +166,5 @@ cython_debug/
 *.lib
 
 # Executables
-*.exe
 *.out
 *.app

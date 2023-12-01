@@ -9,7 +9,7 @@ classdef PlayChord < audioPlugin % Inherit from audioPluginSource (one that only
     end
     properties (Constant)
         % Music Consts
-        A        = 110; % The A string of a guitar is normally tuned to 110 Hz
+        AFreq    = 110; % The A string of a guitar is normally tuned to 110 Hz
         Eoffset  = -5;
         Doffset  = 5;
         Goffset  = 10;
@@ -27,17 +27,20 @@ classdef PlayChord < audioPlugin % Inherit from audioPluginSource (one that only
 
         function note = generateNote(plugin, fret, FS)
             % Generate zeros to be used to generate the guitar notes.
-            x = zeros(FS * plugin.LengthOfNote, 1);         
-            envelope = [ones(FS,1); linspace(1,0,FS*(plugin.LengthOfNote - 1)).']; % simple decay sustain + decay envelope
+            x = zeros(FS * plugin.LengthOfNote, 1);      
+            A = linspace(0,1,FS/100).';
+            S = ones(FS,1);
+            R = linspace(1,0,FS*(plugin.LengthOfNote - 1.01)).';
+            ADSR = [A;S;R]; % ADSR envelope
 
             % Get the delays for each note based on the frets and the string offsets.
             % D = Fs/F0 where Fs = sampling rate and F0 = fundamental frequency
-            stringDelays = [round(FS/(plugin.A*2^((fret(1)+plugin.Eoffset)/12))), ...
-                    round(FS/(plugin.A*2^(fret(2)/12))), ...
-                    round(FS/(plugin.A*2^((fret(3)+plugin.Doffset)/12))), ...
-                    round(FS/(plugin.A*2^((fret(4)+plugin.Goffset)/12))), ...
-                    round(FS/(plugin.A*2^((fret(5)+plugin.Boffset)/12))), ...
-                    round(FS/(plugin.A*2^((fret(6)+plugin.E2offset)/12)))];
+            stringDelays = [round(FS/(plugin.AFreq*2^((fret(1)+plugin.Eoffset)/12))), ...
+                    round(FS/(plugin.AFreq*2^(fret(2)/12))), ...
+                    round(FS/(plugin.AFreq*2^((fret(3)+plugin.Doffset)/12))), ...
+                    round(FS/(plugin.AFreq*2^((fret(4)+plugin.Goffset)/12))), ...
+                    round(FS/(plugin.AFreq*2^((fret(5)+plugin.Boffset)/12))), ...
+                    round(FS/(plugin.AFreq*2^((fret(6)+plugin.E2offset)/12)))];
 
             bCoefs = cell(length(stringDelays), 1); % struct for b filter coefficients for each string
             aCoefs = cell(length(stringDelays), 1); % struct for a filter coefficients for each string
@@ -63,7 +66,7 @@ classdef PlayChord < audioPlugin % Inherit from audioPluginSource (one that only
             note = sum(notes, 2); % Combine the notes
             note = note/max(abs(note)); % Normalize the sound
 
-            note = note .* envelope;
+            note = note .* ADSR;
         end % generateNote() 
 
         function out = process(plugin, in) % Define audio processing 
