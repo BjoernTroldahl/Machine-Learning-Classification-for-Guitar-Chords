@@ -3,7 +3,9 @@ classdef PlayChord < audioPlugin % Inherit from audioPluginSource (one that only
     properties
         % Music Logic
         lastChord uint8 = 0;
-        buffer = zeros(192000, 2); % buffer for storing generated sound, sort of circular buffer        
+        buffer = zeros(48000 * 3, 2); % buffer for storing generated sound, sort of circular buffer  
+
+        udpr
     end
     properties (Constant)
         % Music Consts
@@ -13,21 +15,23 @@ classdef PlayChord < audioPlugin % Inherit from audioPluginSource (one that only
         Goffset  = 10;
         Boffset  = 14;
         E2offset = 19;
-        LengthOfNote = 1;
+        LengthOfNote = 3;
 
         minChord = 0;
         maxChord = 25;
-
-        % Technical
-        UdpPort = 14550;
     end
     methods
+        function plugin = PlayChord % constructor
+            plugin.udpr = dsp.UDPReceiver('LocalIPPort', 1108); % initialize UDP Receive object
+        end
 
         function note = generateNote(plugin, fret, FS)
             % Generate zeros to be used to generate the guitar notes.
             x = zeros(FS * plugin.LengthOfNote, 1);         
+            envelope = [ones(FS,1); linspace(1,0,FS*(plugin.LengthOfNote - 1)).']; % simple decay sustain + decay envelope
 
             % Get the delays for each note based on the frets and the string offsets.
+            % D = Fs/F0 where Fs = sampling rate and F0 = fundamental frequency
             stringDelays = [round(FS/(plugin.A*2^((fret(1)+plugin.Eoffset)/12))), ...
                     round(FS/(plugin.A*2^(fret(2)/12))), ...
                     round(FS/(plugin.A*2^((fret(3)+plugin.Doffset)/12))), ...
@@ -56,16 +60,17 @@ classdef PlayChord < audioPlugin % Inherit from audioPluginSource (one that only
                 notes(:, stringId) = notes(:, stringId) - mean(notes(:, stringId));
             end
 
-            note = sum(notes,2); % Combine the notes
+            note = sum(notes, 2); % Combine the notes
             note = note/max(abs(note)); % Normalize the sound
+
+            note = note .* envelope;
         end % generateNote() 
 
         function out = process(plugin, in) % Define audio processing 
             sampleRate = plugin.getSampleRate(); % read host's sample rate 
             bufferLen = size(in,1); % read host's buffer length 
-
-            udpr = dsp.UDPReceiver('LocalIPPort', plugin.UdpPort); 
-            chord = udpr();
+            
+            chord = plugin.udpr();
 
             % We only generate a new sound if the chord was changed!
             % checks if a new chord was played
@@ -89,9 +94,27 @@ classdef PlayChord < audioPlugin % Inherit from audioPluginSource (one that only
 
         end % process()  
         
-    end
+        % system object initialization
+        function s = saveobj(obj)
+            s = saveobj@audioPlugin(obj);
+            s.udpr = matlab.System.saveObject(obj.udpr);
+        end
+        % system object initialization
+        function obj = reload(obj,s)
+            obj = reload@audioPlugin(obj,s);
+            obj.udpr = matlab.System.loadObject(s.udpr);
+        end
 
+    end
     methods(Static)
+        % system object initialization
+        function obj = loadobj(s)
+            if isstruct(s)
+                obj = audiopluginexample.PlayChord;
+                obj = reload(obj,s);
+            end
+        end     
+    
         function frets = getFretsFromChordNumber(no)
             chordMappings = {"A","Am","A#","A#m"...
                              "B","Bm",...
