@@ -58,6 +58,7 @@ cd <path_to_project>
 set PATH='<path_to_matlab>\bin\win64'%PATH%;
 ```
 Ex. `set PATH='C:\Program Files\MATLAB\R2023a\bin\win64'%PATH%;`  
+
 4. Run the .exe file 
 ```
 ./PlayChord.exe
