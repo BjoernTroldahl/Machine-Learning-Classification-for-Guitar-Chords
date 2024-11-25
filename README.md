@@ -1,6 +1,5 @@
-# SMC7-Semester-Project
-Version control for the SMC7 project
-GitHub
+# Machine learning classification software for detecting guitar chords in real-time
+Requires an NVIDIA Jetson and an external camera USB-camera.
 
 # NVIDIA Jetson
 ## Set up the project on Jetson 
