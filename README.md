@@ -1,5 +1,7 @@
 # Machine learning classification software for detecting guitar chords in real-time
-Requires an NVIDIA Jetson and an external camera USB-camera.
+This software is a tool meant to assist novice guitar players in correctly identifying guitar chords while playing and learning guitar.
+Before running the program, NoMachine and MATLAB needs to be installed on your computer.
+Hardware-wise, you also need to connect an NVIDIA Jetson and an external USB-camera to your PC.
 
 # NVIDIA Jetson
 ## Set up the project on Jetson 
