@@ -3,7 +3,7 @@ This program is a tool meant to assist novice guitar players in correctly identi
 
 Before running the program, NoMachine and MATLAB needs to be installed on your computer.
 
-Hardware-wise, you also need to connect an NVIDIA Jetson with an external USB-camera to your PC.
+Hardware-wise, you need to connect an NVIDIA Jetson with an external USB-camera to your PC.
 
 # NVIDIA Jetson
 ## Set up the project on Jetson 
