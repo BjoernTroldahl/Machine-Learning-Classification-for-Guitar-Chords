@@ -1,7 +1,7 @@
 # Machine learning classification software for detecting guitar chords in real-time
 This program is a tool meant to assist novice guitar players in correctly identifying guitar chords, while playing and learning guitar.
 
-Before running the program, NoMachine and MATLAB needs to be installed on your computer.
+Before running the program, MATLAB needs to be installed on your computer.
 
 Hardware-wise, you need to connect an NVIDIA Jetson with an external USB-camera to your PC.
 
