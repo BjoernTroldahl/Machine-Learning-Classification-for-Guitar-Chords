@@ -1,5 +1,5 @@
 # Machine learning classification software for detecting guitar chords in real-time
-This program is a tool meant to assist novice guitar players in correctly identifying guitar chords, while playing and learning guitar.
+This program is meant to assist novice guitar players in correctly identifying guitar chords, while playing and learning guitar.
 
 Before running the program, MATLAB needs to be installed on your computer.
 
